@@ -25,4 +25,4 @@ pip install tkinter logging amulet-core
 ## 🔧 Recommended Hammer Settings
 For better texture scaling:  
 `Tools > Options... > Game Configurations > Default texture scale: 0.1562`
-```
+
