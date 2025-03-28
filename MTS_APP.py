@@ -11,10 +11,10 @@ class BlockTextureUI:
     def __init__(self):
         self.window = tk.Tk()
         self.window.title("Minecraft to Source Converter")
-        self.window.geometry("800x335")
+        self.window.geometry("835x340")
         # Default paths
-        self.world_path = tk.StringVar(value=r"C:\Users\lemon\AppData\Roaming\ModrinthApp\profiles\1.21.4\saves")
-        self.output_path = tk.StringVar(value=r"N:\Gry\Steam\steamapps\common\GarrysMod\garrysmod\maps\test_mc")
+        self.world_path = tk.StringVar(value=r"Localization to your Minecraft WORLD")
+        self.output_path = tk.StringVar(value=r"Location to where you want to save the VMF file")
         self.x1 = tk.StringVar(value="-65")
         self.z1 = tk.StringVar(value="-65")
         self.x2 = tk.StringVar(value="65")
@@ -26,10 +26,10 @@ class BlockTextureUI:
         path_frame = ttk.LabelFrame(self.window, text="Paths", padding="5")
         path_frame.pack(fill="x", padx=5, pady=5)
         ttk.Label(path_frame, text="Minecraft World:").grid(row=0, column=0, sticky="w")
-        ttk.Entry(path_frame, textvariable=self.world_path, width=50).grid(row=0, column=1, padx=5)
+        ttk.Entry(path_frame, textvariable=self.world_path, width=100).grid(row=0, column=1, padx=5)
         ttk.Button(path_frame, text="Browse", command=self.browse_world).grid(row=0, column=2)
         ttk.Label(path_frame, text="VMF Output:").grid(row=1, column=0, sticky="w")
-        ttk.Entry(path_frame, textvariable=self.output_path, width=50).grid(row=1, column=1, padx=5)
+        ttk.Entry(path_frame, textvariable=self.output_path, width=100).grid(row=1, column=1, padx=5)
         ttk.Button(path_frame, text="Browse", command=self.browse_output).grid(row=1, column=2)
         # Coordinates
         coord_frame = ttk.LabelFrame(self.window, text="Coordinates", padding="5")
