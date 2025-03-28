@@ -21,6 +21,7 @@ To run manually (`MTS_app.py`) you'll need:
 ```bash
 pip install tkinter logging amulet-core
 ```
+and Visual Studio Build Tools 2022: [https://visualstudio.microsoft.com/downloads/](https://visualstudio.microsoft.com/downloads/)
 
 ## 🔧 Recommended Hammer Settings
 For better texture scaling:  
