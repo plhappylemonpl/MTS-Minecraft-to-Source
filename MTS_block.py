@@ -383,23 +383,9 @@ def compute_texture_config(block_name, properties):
         return config, orientation
     
     if short_name == "respawn_anchor":
-        charges = int(properties.get("charges", "0"))
-        charges = max(0, min(4, charges))  
-        if charges == 0:
-            top_texture = f"{base_path}respawn_anchor_top_off"
-        else:
-            top_texture = f"{base_path}respawn_anchor_top"
-        side_texture = f"{base_path}respawn_anchor_side{charges}"
-        config = {
-            "top": top_texture,
-            "sides": side_texture,
-            "bottom": f"{base_path}respawn_anchor_bottom"
-        }
-        return config, orientation
-
-    if short_name == "respawn_anchor":
-        charges = int(properties.get("charges", "0"))
-        charges = max(0, min(4, charges))  
+        charges = properties.get("charges", "0")
+        charges = int(str(charges))
+        charges = max(0, min(4, charges))
         if charges == 0:
             top_texture = f"{base_path}respawn_anchor_top_off"
         else:
