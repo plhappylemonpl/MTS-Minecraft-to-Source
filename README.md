@@ -38,7 +38,7 @@ To run from source (`MTS_app.py`):
 
 2. **Install Python Dependencies**  
    ```bash
-   pip install tk logging juju
+   pip install tk logging
    ```
    and
    ```bash
@@ -46,7 +46,7 @@ To run from source (`MTS_app.py`):
    ```
    💡 If you get errors with `amulet-core` (happens sometimes!):
    ```bash
-   pip install amulet
+   pip install amulet juju
    ```
 
 3. **You're all set!** 🎉  
