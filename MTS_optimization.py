@@ -105,21 +105,6 @@ def merge_layers_vertical(layer_rects, block_type, properties):
         merged.append((min_x, min_y, min_z, size_x, size_y, size_z, btype, props))
     return merged
 
-def adjust_pivot(cuboid, direction):
-    """
-    Sets the pivot to the center of the cuboid.
-    cuboid: (min_x, min_y, min_z, size_x, size_y, size_z, block_type, properties)
-    Returns the object offset by (-center_x, -center_y, -center_z) - you can then add this correction to
-    the position during export.
-    """
-    min_x, min_y, min_z, size_x, size_y, size_z, btype, props = cuboid
-    center_x = min_x + size_x / 2
-    center_y = min_y + size_y / 2
-    center_z = min_z + size_z / 2
-    # Here you can return e.g. a tuple with information about the pivot - in this version we return the original cuboid
-    # (implementation of the pivot correction depends on further needs)
-    return cuboid
-
 def simulate_optimization(blocks, direction="horizontal"):
     """
     Performs an optimization simulation for the given direction.
@@ -172,11 +157,50 @@ def optimize_blocks(blocks, direction=None):
         else:
             merged_objs.extend(merge_layers_vertical(layer_rects, btype, dict(props_fs)))
     
-    adjusted_objs = [adjust_pivot(obj, direction) for obj in merged_objs]
-    return adjusted_objs
+    return merged_objs
 
 from PyVMF import SolidGenerator, Vertex
 from MTS_block import TEXTURE_SCALE, compute_texture_config
+
+def setSolidSides(solid, texture_config, properties):
+    if (str(properties.get("axis", "y")).lower() == "y"):
+        solid.side[4].material = texture_config.get("top", texture_config.get("sides", ""))
+        solid.side[5].material = texture_config.get("bottom", texture_config.get("sides", ""))
+        for i in range(2, 4):
+            solid.side[i].material = texture_config.get("sides", texture_config.get("all", ""))
+        for i in range(0, 2):
+            solid.side[i].material = texture_config.get("sides", texture_config.get("all", ""))
+    elif (str(properties.get("axis", "y")).lower() == "x"):
+        for i in range(0, 2):
+            solid.side[i].material = texture_config.get("sides", texture_config.get("all", ""))
+        for i in range(2, 4):
+            solid.side[i].material = texture_config.get("top", texture_config.get("sides", ""))
+        for i in range(4, 6):
+            solid.side[i].material = texture_config.get("sides", texture_config.get("all", ""))
+    elif (str(properties.get("axis", "y")).lower() == "z"):
+        for i in range(0, 2):
+            solid.side[i].material = texture_config.get("top", texture_config.get("sides", ""))
+        for i in range(2, 4):
+            solid.side[i].material = texture_config.get("sides", texture_config.get("all", ""))
+        for i in range(4, 6):
+            solid.side[i].material = texture_config.get("sides", texture_config.get("all", ""))
+
+    # TOP
+    solid.side[4].uaxis = "[1 0 0 0] " + str(TEXTURE_SCALE)
+    solid.side[4].vaxis = "[0 -1 0 0] " + str(TEXTURE_SCALE)
+    # BOTTOM
+    solid.side[5].uaxis = "[1 0 0 0] " + str(TEXTURE_SCALE)
+    solid.side[5].vaxis = "[0 -1 0 0] " + str(TEXTURE_SCALE)
+    # XSide
+    for i in range(2, 4):
+        solid.side[i].uaxis = "[0 1 0 0] " + str(TEXTURE_SCALE)
+        solid.side[i].vaxis = "[0 0 -1 0] " + str(TEXTURE_SCALE)
+    # ZSide
+    for i in range(0, 2):
+        solid.side[i].uaxis = "[1 0 0 0] " + str(TEXTURE_SCALE)
+        solid.side[i].vaxis = "[0 0 -1 0] " + str(TEXTURE_SCALE)
+
+    return solid
 
 def create_cuboid(vmf, x, y, z, dx, dy, dz, block_type, properties):
     """
@@ -184,9 +208,10 @@ def create_cuboid(vmf, x, y, z, dx, dy, dz, block_type, properties):
     Sets textures and UVs to maintain default rotation.
 
     Assuming:
-    solid.side[0] is TOP,
-    solid.side[1] is BOTTOM,
-    solid.side[2]-[5] are SIDES.
+    solid.side[4] is TOP,
+    solid.side[5] is BOTTOM,
+    solid.side[2]-[3] are XSIDES.
+    solid.side[0]-[1] are ZSIDES.
     """
     solid_gen = SolidGenerator()
     vertex = Vertex(x, y, z)
@@ -197,26 +222,8 @@ def create_cuboid(vmf, x, y, z, dx, dy, dz, block_type, properties):
     
     texture_config, orientation = compute_texture_config(block_type, properties)
     
-    if len(solid.side) >= 6:
-        # TOP
-        solid.side[0].material = texture_config.get("top", texture_config.get("sides", ""))
-        solid.side[0].uaxis = "[1 0 0 0] " + str(TEXTURE_SCALE)
-        solid.side[0].vaxis = "[0 -1 0 0] " + str(TEXTURE_SCALE)
-        # BOTTOM
-        solid.side[1].material = texture_config.get("bottom", texture_config.get("sides", ""))
-        solid.side[1].uaxis = "[1 0 0 0] " + str(TEXTURE_SCALE)
-        solid.side[1].vaxis = "[0 -1 0 0] " + str(TEXTURE_SCALE)
-        # Boki
-        for i in range(2, 6):
-            solid.side[i].material = texture_config.get("sides", texture_config.get("all", ""))
-            solid.side[i].uaxis = "[0 1 0 0] " + str(TEXTURE_SCALE)
-            solid.side[i].vaxis = "[0 0 -1 0] " + str(TEXTURE_SCALE)
-    else:
-        for side in solid.side:
-            side.material = texture_config.get("all", texture_config.get("sides", ""))
-            side.uaxis = "[1 0 0 0] " + str(TEXTURE_SCALE)
-            side.vaxis = "[0 -1 0 0] " + str(TEXTURE_SCALE)
-    
+    solid = setSolidSides(solid, texture_config, properties)
+
     vmf.world.solids.append(solid)
 
 # Optional testing
