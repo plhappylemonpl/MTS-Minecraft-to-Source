@@ -381,6 +381,22 @@ def compute_texture_config(block_name, properties):
                       "sides": f"{base_path}grass_block_side_y",
                       "bottom": f"{base_path}dirt"}
         return config, orientation
+    
+    if short_name == "respawn_anchor":
+        charges = properties.get("charges", "0")
+        charges = int(str(charges))
+        charges = max(0, min(4, charges))
+        if charges == 0:
+            top_texture = f"{base_path}respawn_anchor_top_off"
+        else:
+            top_texture = f"{base_path}respawn_anchor_top"
+        side_texture = f"{base_path}respawn_anchor_side{charges}"
+        config = {
+            "top": top_texture,
+            "sides": side_texture,
+            "bottom": f"{base_path}respawn_anchor_bottom"
+        }
+        return config, orientation
 
     default_texture = f"{base_path}{short_name}"
     config = {"top": default_texture, "sides": default_texture, "bottom": default_texture}
