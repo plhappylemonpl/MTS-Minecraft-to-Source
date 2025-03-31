@@ -47,7 +47,7 @@ def compute_texture_config(block_name, properties):
         return config, orientation
 
     # Wood blocks (log/wood)
-    if "log" in short_name or "wood" in short_name:
+    if "log" in short_name:
         material = str(properties.get("material", "oak")).lower()
         # Bamboo support – when the material is "bamboo"
         if material == "bamboo":
@@ -82,7 +82,173 @@ def compute_texture_config(block_name, properties):
         config = {"top": texture_top, "sides": texture_side, "bottom": texture_top}
         orientation = axis  # "x", "y" or "z"
         return config, orientation
+    
 
+    if "wood" in short_name:
+        material = str(properties.get("material", "oak")).lower()
+        # Warped and crimson stem support
+        if material in ["warped", "crimson"]:
+            stripped = properties.get("stripped", "false")
+            is_stripped = (str(stripped).lower() == "true")
+            prefix = "stripped_" if is_stripped else ""
+            texture_top = f"{base_path}{prefix}{material}_stem"
+            texture_side = f"{base_path}{prefix}{material}_stem"
+            config = {"top": texture_top, "sides": texture_side, "bottom": texture_top}
+            orientation = str(properties.get("axis", "y")).lower()
+            return config, orientation
+        # Standard wood
+        stripped = properties.get("stripped", "false")
+        is_stripped = (str(stripped).lower() == "true")
+        axis = str(properties.get("axis", "y")).lower()
+        if is_stripped:
+            texture_top = f"{base_path}stripped_{material}_log"
+            texture_side = f"{base_path}stripped_{material}_log"
+        else:
+            texture_top = f"{base_path}{material}_log"
+            texture_side = f"{base_path}{material}_log"
+        config = {"top": texture_top, "sides": texture_side, "bottom": texture_top}
+        orientation = axis  # "x", "y" or "z"
+        return config, orientation
+
+
+    if short_name == "brick_block":
+        config = {
+            "top": f"{base_path}bricks",
+            "sides": f"{base_path}bricks",
+            "bottom": f"{base_path}bricks"
+        }
+        return config, orientation
+    
+    if short_name == "honey_block":
+        config = {
+            "top": f"{base_path}honey_block_top",
+            "sides": f"{base_path}honey_block_side",
+            "bottom": f"{base_path}honey_block_bottom"
+        }
+        return config, orientation
+    
+    if short_name == "lodestone":
+        config = {
+            "top": f"{base_path}lodestone_top",
+            "sides": f"{base_path}lodestone_side",
+            "bottom": f"{base_path}lodestone_top"
+        }
+        return config, orientation
+    
+    if short_name == "ancient_debris":
+        config = {
+            "top": f"{base_path}ancient_debris_top",
+            "sides": f"{base_path}ancient_debris_side",
+            "bottom": f"{base_path}ancient_debris_top"
+        }
+        return config, orientation
+
+    if short_name == "jukebox":
+        config = {
+            "top": f"{base_path}jukebox_top",
+            "sides": f"{base_path}jukebox_side",
+            "bottom": f"{base_path}jukebox_side"
+        }
+        return config, orientation
+    
+    if short_name == "pumpkin":
+        config = {
+            "top": f"{base_path}pumpkin_top",
+            "sides": f"{base_path}pumpkin_side",
+            "bottom": f"{base_path}pumpkin_top"
+        }
+        return config, orientation
+
+    if short_name == "basalt":
+        axis = str(properties.get("axis", "y")).lower()
+        config = {
+            "top": f"{base_path}basalt_top",
+            "sides": f"{base_path}basalt_side",
+            "bottom": f"{base_path}basalt_top"
+        }
+        orientation = axis
+        return config, orientation
+    
+    if short_name == "polished_basalt":
+        axis = str(properties.get("axis", "y")).lower()
+        config = {
+            "top": f"{base_path}polished_basalt_top",
+            "sides": f"{base_path}polished_basalt_side",
+            "bottom": f"{base_path}polished_basalt_top"
+        }
+        orientation = axis
+        return config, orientation
+    
+    if short_name == "hay_block":
+        axis = str(properties.get("axis", "y")).lower()
+        config = {
+            "top": f"{base_path}hay_block_top",
+            "sides": f"{base_path}hay_block_side",
+            "bottom": f"{base_path}hay_block_top"
+        }
+        orientation = axis
+        return config, orientation
+    
+    if short_name == "bone_block":
+        axis = str(properties.get("axis", "y")).lower()
+        config = {
+            "top": f"{base_path}bone_block_top",
+            "sides": f"{base_path}bone_block_side",
+            "bottom": f"{base_path}bone_block_top"
+        }
+        orientation = axis
+        return config, orientation
+    
+    if short_name == "infested_deepslate":
+        axis = str(properties.get("axis", "y")).lower()
+        config = {
+            "top": f"{base_path}deepslate_top",
+            "sides": f"{base_path}deepslate",
+            "bottom": f"{base_path}deepslate_top"
+        }
+        orientation = axis
+        return config, orientation
+
+    if short_name == "deepslate":
+        axis = str(properties.get("axis", "y")).lower()
+        config = {
+            "top": f"{base_path}deepslate_top",
+            "sides": f"{base_path}deepslate",
+            "bottom": f"{base_path}deepslate_top"
+        }
+        orientation = axis
+        return config, orientation
+
+    ##froglight VV
+    if short_name == "pearlescent_froglight":
+        axis = str(properties.get("axis", "y")).lower()
+        config = {
+            "top": f"{base_path}pearlescent_froglight_top",
+            "sides": f"{base_path}pearlescent_froglight_side",
+            "bottom": f"{base_path}pearlescent_froglight_top"
+        }
+        orientation = axis
+        return config, orientation
+    if short_name == "verdant_froglight":
+        axis = str(properties.get("axis", "y")).lower()
+        config = {
+            "top": f"{base_path}verdant_froglight_top",
+            "sides": f"{base_path}verdant_froglight_side",
+            "bottom": f"{base_path}verdant_froglight_top"
+        }
+        orientation = axis
+        return config, orientation
+    if short_name == "ochre_froglight":
+        axis = str(properties.get("axis", "y")).lower()
+        config = {
+            "top": f"{base_path}ochre_froglight_top",
+            "sides": f"{base_path}ochre_froglight_side",
+            "bottom": f"{base_path}ochre_froglight_top"
+        }
+        orientation = axis
+        return config, orientation
+    ##froglight ^^
+    
     # Color blocks – wool
     if "wool" in short_name:
         color = str(properties.get("color", "white")).lower()
@@ -344,6 +510,19 @@ def compute_texture_config(block_name, properties):
                       "sides": f"{base_path}red_sandstone",
                       "bottom": f"{base_path}red_sandstone_bottom"}
         return config, orientation
+
+    if short_name == "sponge":
+        wet = str(properties.get("wet", "false")).lower()
+        if wet == "false":
+            config = {"top": f"{base_path}sponge",
+                      "sides": f"{base_path}sponge",
+                      "bottom": f"{base_path}sponge"}
+        elif wet == "true":
+            config = {"top": f"{base_path}wet_sponge",
+                      "sides": f"{base_path}wet_sponge",
+                      "bottom": f"{base_path}wet_sponge"}
+        return config, orientation
+    
 
     if short_name == "sandstone":
         variant = str(properties.get("variant", "normal")).lower()
