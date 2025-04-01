@@ -1,5 +1,8 @@
 # MTS_optimization.py
 
+from PyVMF import SolidGenerator, Vertex
+from MTS_block import TEXTURE_SCALE, compute_texture_config
+
 def partition_layer(coords):
     """
     Given a set of coordinates (x, z) in one layer,
@@ -57,7 +60,7 @@ def merge_layers(rect_dict, block_type, properties):
     merged = []
     ys = sorted(rect_dict.keys())
     processed = {y: [False] * len(rect_dict[y]) for y in ys}
-    
+
     for i, y in enumerate(ys):
         for j, rect in enumerate(rect_dict[y]):
             if processed[y][j]:
@@ -72,16 +75,16 @@ def merge_layers(rect_dict, block_type, properties):
                     if processed[y_next][k]:
                         continue
                     if rect_next == current_rect:
-                        processed[y_next][k] = True
-                        max_y = y_next
-                        found = True
-                        break
+                            processed[y_next][k] = True
+                            max_y = y_next 
+                            found = True
+                            break
                 if not found:
                     break
             size_x = current_rect[2]
             size_z = current_rect[3]
             size_y = max_y - min_y + 1
-            merged.append((current_rect[0], min_y, current_rect[1], size_x, size_y, size_z, block_type, properties))
+            merged.append((current_rect[0], min_y, current_rect[1], size_x, size_z, size_y, block_type, properties))
     return merged
 
 def merge_layers_horizontal(layer_rects, block_type, properties):
@@ -95,14 +98,18 @@ def merge_layers_vertical(layer_rects, block_type, properties):
     - Merge using merge_layers
     - Transpose the result back
     """
+
     transposed = {}
     for y, rects in layer_rects.items():
-        # We replace: (min_x, min_z, width, depth) -> (min_z, min_x, depth, width)
-        transposed[y] = [(r[1], r[0], r[3], r[2]) for r in rects]
+        # Zamiana: (min_x, min_z, width, depth) -> (min_z, min_x, depth, width)
+        transposed[y] = [(r[0], r[1], r[2], r[3]) for r in rects]
+
     merged_transposed = merge_layers(transposed, block_type, properties)
+
     merged = []
     for (min_z, min_y, min_x, size_z, size_y, size_x, btype, props) in merged_transposed:
         merged.append((min_x, min_y, min_z, size_x, size_y, size_z, btype, props))
+
     return merged
 
 def simulate_optimization(blocks, direction="horizontal"):
@@ -143,19 +150,20 @@ def optimize_blocks(blocks, direction=None):
     
     groups = {}
     for bx, by, bz, btype, props in blocks:
-        key = (btype, frozenset(props.items()))
+        # Convert properties to a tuple of key-value pairs to ensure both keys and values are considered
+        key = (btype, tuple(sorted((k, str(v)) for k, v in props.items())))
         groups.setdefault(key, {}).setdefault(by, set()).add((bx, bz))
     
     merged_objs = []
-    for (btype, props_fs), layers in groups.items():
+    for (btype, props_tuple), layers in groups.items():
         layer_rects = {}
         for y, coords in layers.items():
             rects = partition_layer(coords)
             layer_rects[y] = rects
         if direction == "horizontal":
-            merged_objs.extend(merge_layers_horizontal(layer_rects, btype, dict(props_fs)))
+            merged_objs.extend(merge_layers_horizontal(layer_rects, btype, dict(props_tuple)))
         else:
-            merged_objs.extend(merge_layers_vertical(layer_rects, btype, dict(props_fs)))
+            merged_objs.extend(merge_layers_vertical(layer_rects, btype, dict(props_tuple)))
     
     return merged_objs
 
@@ -166,9 +174,7 @@ def setSolidSides(solid, texture_config, properties):
     if (str(properties.get("axis", "y")).lower() == "y"):
         solid.side[4].material = texture_config.get("top", texture_config.get("sides", ""))
         solid.side[5].material = texture_config.get("bottom", texture_config.get("sides", ""))
-        for i in range(2, 4):
-            solid.side[i].material = texture_config.get("sides", texture_config.get("all", ""))
-        for i in range(0, 2):
+        for i in range(0, 4):
             solid.side[i].material = texture_config.get("sides", texture_config.get("all", ""))
     elif (str(properties.get("axis", "y")).lower() == "x"):
         for i in range(0, 2):
@@ -180,9 +186,7 @@ def setSolidSides(solid, texture_config, properties):
     elif (str(properties.get("axis", "y")).lower() == "z"):
         for i in range(0, 2):
             solid.side[i].material = texture_config.get("top", texture_config.get("sides", ""))
-        for i in range(2, 4):
-            solid.side[i].material = texture_config.get("sides", texture_config.get("all", ""))
-        for i in range(4, 6):
+        for i in range(2, 6):
             solid.side[i].material = texture_config.get("sides", texture_config.get("all", ""))
 
     # TOP
