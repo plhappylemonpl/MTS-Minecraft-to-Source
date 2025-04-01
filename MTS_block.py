@@ -576,6 +576,17 @@ def compute_texture_config(block_name, properties):
             "bottom": f"{base_path}respawn_anchor_bottom"
         }
         return config, orientation
+    
+    if short_name == "cartography_table":
+        config = {
+            "top": f"{base_path}cartography_table_top",
+            "bottom": f"{base_path}cartography_table_side3",
+            "side_0": f"{base_path}cartography_table_side3",
+            "side_1": f"{base_path}cartography_table_side2",
+            "side_2": f"{base_path}cartography_table_side3",
+            "side_3": f"{base_path}cartography_table_side2"
+        }
+        return config, orientation
 
     default_texture = f"{base_path}{short_name}"
     config = {"top": default_texture, "sides": default_texture, "bottom": default_texture}
@@ -592,8 +603,19 @@ def create_block(vmf, x, y, z, block_type, texture_config, orientation=None):
     vertex = Vertex(x, y, z)
     solid = solid_gen.cube(vertex, BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
 
+    # Mapping between side indices and texture config keys
+    side_mapping = {
+        0: ["side_0", "sides"],  # Z face (north)
+        1: ["side_1", "sides"],  # Z face (south) 
+        2: ["side_2", "sides"],  # X face (west)
+        3: ["side_3", "sides"],  # X face (east)
+        4: ["side_4", "top"],    # Top face
+        5: ["side_5", "bottom"]  # Bottom face
+    }
+
     for i, side in enumerate(solid.side):
         if orientation is not None and isinstance(orientation, dict) and "rotation" in orientation:
+            # Handle special cases with rotation
             side.material = texture_config.get("all", "")
             facing = orientation.get("facing", "north")
             rot = orientation["rotation"]
@@ -611,58 +633,39 @@ def create_block(vmf, x, y, z, block_type, texture_config, orientation=None):
                 elif rot == 270:
                     side.uaxis = f"[0 1 0 0] {TEXTURE_SCALE}"
                     side.vaxis = f"[-1 0 0 0] {TEXTURE_SCALE}"
-                else:
-                    side.uaxis = f"[1 0 0 0] {TEXTURE_SCALE}"
-                    side.vaxis = f"[0 -1 0 0] {TEXTURE_SCALE}"
             else:
                 side.uaxis = f"[0 1 0 0] {TEXTURE_SCALE}"
                 side.vaxis = f"[0 0 -1 0] {TEXTURE_SCALE}"
         else:
-            if orientation is None:
-                if i == 5:  # Bottom
-                    side.material = texture_config["bottom"]
-                    side.uaxis = f"[0 0 0] {TEXTURE_SCALE}"
-                    side.vaxis = f"[1 0 0] {TEXTURE_SCALE}"
-                elif i == 4:  # Top
-                    side.material = texture_config["top"]
-                    side.uaxis = f"[0 0 0] {TEXTURE_SCALE}"
-                    side.vaxis = f"[1 1 0] {TEXTURE_SCALE}"
-                else:
-                    side.material = texture_config["sides"]
-                    side.uaxis = f"[0 0 0] {TEXTURE_SCALE}"
-                    side.vaxis = f"[1 1 0] {TEXTURE_SCALE}"
+            # Handle axis-based orientation
+            if str(orientation).lower() in ["x", "y", "z"]:
+                if str(orientation).lower() == "y":
+                    texture_keys = side_mapping[4] if i in [4, 5] else side_mapping[i]
+                elif str(orientation).lower() == "x":
+                    texture_keys = side_mapping[4] if i in [2, 3] else side_mapping[i]
+                elif str(orientation).lower() == "z":
+                    texture_keys = side_mapping[4] if i in [0, 1] else side_mapping[i]
             else:
-                if str(orientation).lower() in ["x", "y", "z"]:
-                    if str(orientation).lower() == "y":
-                        side.material = texture_config["top"] if i in [4, 5] else texture_config["sides"]
-                    elif str(orientation).lower() == "x":
-                        side.material = texture_config["top"] if i in [2, 3] else texture_config["sides"]
-                    elif str(orientation).lower() == "z":
-                        side.material = texture_config["top"] if i in [0, 1] else texture_config["sides"]
-                else:
-                    orient = str(orientation).lower()
-                    if orient == "north":
-                        side.material = texture_config["top"] if i == 0 else texture_config["sides"]
-                    elif orient == "south":
-                        side.material = texture_config["top"] if i == 1 else texture_config["sides"]
-                    elif orient == "east":
-                        side.material = texture_config["top"] if i == 3 else texture_config["sides"]
-                    elif orient == "west":
-                        side.material = texture_config["top"] if i == 2 else texture_config["sides"]
+                # Try to get texture from side_N first, then fall back to traditional mapping
+                texture_keys = side_mapping.get(i, ["sides"])
 
-            if i == 5:
+            # Apply the first available texture from the keys
+            for key in texture_keys:
+                if key in texture_config:
+                    side.material = texture_config[key]
+                    break
+
+            # Set UV axes based on side index
+            if i == 5:  # Bottom
                 side.uaxis = f"[0 0 0] {TEXTURE_SCALE}"
                 side.vaxis = f"[1 0 0] {TEXTURE_SCALE}"
-            elif i == 4:
+            elif i == 4:  # Top
                 side.uaxis = f"[0 0 0] {TEXTURE_SCALE}"
                 side.vaxis = f"[1 1 0] {TEXTURE_SCALE}"
-            elif i in [0, 1]:
+            else:  # Sides
                 side.uaxis = f"[0 0 0] {TEXTURE_SCALE}"
                 side.vaxis = f"[1 1 0] {TEXTURE_SCALE}"
-            else:
-                side.uaxis = f"[0 0 0] {TEXTURE_SCALE}"
-                side.vaxis = f"[1 1 0] {TEXTURE_SCALE}"
-        
+
         side.lightmapscale = 16
         side.smoothing_groups = 0
         side.justify = 6
