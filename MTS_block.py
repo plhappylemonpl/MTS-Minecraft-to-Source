@@ -640,20 +640,27 @@ def create_block(vmf, x, y, z, block_type, texture_config, orientation=None):
             # Handle axis-based orientation
             if str(orientation).lower() in ["x", "y", "z"]:
                 if str(orientation).lower() == "y":
-                    texture_keys = side_mapping[4] if i in [4, 5] else side_mapping[i]
+                    # Y axis - default orientation (top on top)
+                    side.material = texture_config.get("top", "") if i in [4, 5] else texture_config.get("sides", "")
                 elif str(orientation).lower() == "x":
-                    texture_keys = side_mapping[4] if i in [2, 3] else side_mapping[i]
+                    # X axis - rotate so top texture is on X faces
+                    if i in [2, 3]:  # X faces
+                        side.material = texture_config.get("top", "")
+                    else:  # Other faces
+                        side.material = texture_config.get("sides", "")
                 elif str(orientation).lower() == "z":
-                    texture_keys = side_mapping[4] if i in [0, 1] else side_mapping[i]
+                    # Z axis - rotate so top texture is on Z faces
+                    if i in [0, 1]:  # Z faces
+                        side.material = texture_config.get("top", "")
+                    else:  # Other faces
+                        side.material = texture_config.get("sides", "")
             else:
                 # Try to get texture from side_N first, then fall back to traditional mapping
                 texture_keys = side_mapping.get(i, ["sides"])
-
-            # Apply the first available texture from the keys
-            for key in texture_keys:
-                if key in texture_config:
-                    side.material = texture_config[key]
-                    break
+                for key in texture_keys:
+                    if key in texture_config:
+                        side.material = texture_config[key]
+                        break
 
             # Set UV axes based on side index
             if i == 5:  # Bottom
