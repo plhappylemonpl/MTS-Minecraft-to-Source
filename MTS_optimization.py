@@ -3,16 +3,19 @@
 from PyVMF import SolidGenerator, Vertex
 from MTS_block import TEXTURE_SCALE, compute_texture_config
 
+
 def partition_layer(coords):
     """
     Given a set of coordinates (x, z) in one layer,
-    creates a matrix of occupied cells based on the bounding rectangle,
-    and then extracts the maximal rectangles filled with ones.
-    Returns a list of rectangles in the form:
-    (min_x, min_z, width, depth)
+    creates a matrix of occupied cells and ensures blocks are connected.
     """
     if not coords:
         return []
+    
+    # Convert coords to set for O(1) lookup
+    coords_set = set(coords)
+    
+    # Find boundaries
     min_x = min(x for x, z in coords)
     max_x = max(x for x, z in coords)
     min_z = min(z for x, z in coords)
@@ -21,6 +24,7 @@ def partition_layer(coords):
     width = max_x - min_x + 1
     depth = max_z - min_z + 1
     
+    # Create grid
     grid = [[0] * width for _ in range(depth)]
     for (x, z) in coords:
         grid[z - min_z][x - min_x] = 1
@@ -29,26 +33,39 @@ def partition_layer(coords):
     for i in range(depth):
         for j in range(width):
             if grid[i][j] == 1:
+                # Check horizontal continuity
                 max_w = 0
-                while j + max_w < width and grid[i][j + max_w] == 1:
+                while (j + max_w < width and 
+                       grid[i][j + max_w] == 1 and 
+                       (j + max_w + 1 >= width or grid[i][j + max_w + 1] == 1 or max_w == 0)):
                     max_w += 1
+                
+                # Check vertical continuity
                 max_d = 1
-                while i + max_d < depth:
+                is_continuous = True
+                while i + max_d < depth and is_continuous:
+                    # Verify entire row is filled AND connected
                     for col in range(j, j + max_w):
-                        if grid[i + max_d][col] != 1:
-                            max_d = None
+                        if grid[i + max_d][col] != 1 or (
+                           # Check if this block is connected to the previous row
+                           not any(grid[i + max_d - 1][c] == 1 
+                                 for c in range(max(0, col-1), min(width, col+2)))):
+                            is_continuous = False
                             break
-                    if max_d is None:
+                    if is_continuous:
+                        max_d += 1
+                    else:
                         break
-                    max_d += 1
-                if max_d is None:
-                    max_d = 1
+                
+                # Mark used cells
                 for di in range(max_d):
                     for dj in range(max_w):
                         grid[i + di][j + dj] = 0
+                
                 rect_min_x = j + min_x
                 rect_min_z = i + min_z
                 rects.append((rect_min_x, rect_min_z, max_w, max_d))
+    
     return rects
 
 def merge_layers(rect_dict, block_type, properties):
@@ -133,24 +150,63 @@ def analyze_blocks(blocks):
     else:
         return "vertical"
 
+
+def can_merge_blocks(block1_type, block1_props, block2_type, block2_props):
+    """
+    Enhanced block merging validation
+    """
+    if block1_type != block2_type:
+        return False
+
+    # Rozszerzona lista właściwości krytycznych
+    critical_properties = [
+        "variant",      
+        "axis",         
+        "facing",       
+        "charges",      
+        "snowy",        
+        "material",     
+        "lit",          
+        "powered",      
+        "type",         
+        "stripped",     
+        "coral_type",   
+        "dead",         
+        "polished",     
+        "color",
+        "north",        # Dodane właściwości kierunkowe
+        "south",
+        "east",
+        "west",
+        "rotation"
+    ]
+
+    # Jeśli którykolwiek blok ma właściwości kierunkowe, traktuj je jako różne
+    directional_props = ["facing", "axis", "rotation", "north", "south", "east", "west"]
+    if any(prop in block1_props or prop in block2_props for prop in directional_props):
+        return False
+
+    # Standardowe sprawdzenie pozostałych właściwości
+    for prop in critical_properties:
+        val1 = block1_props.get(prop)
+        val2 = block2_props.get(prop)
+        if val1 != val2:
+            return False
+
+    return True
+
 def optimize_blocks(blocks, direction=None):
     """
-    Optimizes blocks by merging blocks with identical properties.
-
-    Parameters:
-    blocks: list of tuples (x, y, z, block_type, properties)
-    direction (optional): "horizontal" or "vertical". If not specified,
-    we analyze the block to choose the best one.
-
-    Returns a list of cuboids: (min_x, min_y, min_z, size_x, size_y, size_z, block_type, properties)
+    Optimizes blocks by combining blocks with identical properties.
     """
     if direction is None:
         direction = analyze_blocks(blocks)
         print(f"Selected optimization direction: {direction}")
     
+    # Group files by type and properties
     groups = {}
     for bx, by, bz, btype, props in blocks:
-        # Convert properties to a tuple of key-value pairs to ensure both keys and values are considered
+        # The key contains the block type and all critical properties
         key = (btype, tuple(sorted((k, str(v)) for k, v in props.items())))
         groups.setdefault(key, {}).setdefault(by, set()).add((bx, bz))
     
@@ -160,10 +216,14 @@ def optimize_blocks(blocks, direction=None):
         for y, coords in layers.items():
             rects = partition_layer(coords)
             layer_rects[y] = rects
+        
+        # Convert props_tuple back to dictionary
+        props = dict(props_tuple)
+        
         if direction == "horizontal":
-            merged_objs.extend(merge_layers_horizontal(layer_rects, btype, dict(props_tuple)))
+            merged_objs.extend(merge_layers_horizontal(layer_rects, btype, props))
         else:
-            merged_objs.extend(merge_layers_vertical(layer_rects, btype, dict(props_tuple)))
+            merged_objs.extend(merge_layers_vertical(layer_rects, btype, props))
     
     return merged_objs
 
