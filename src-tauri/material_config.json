@@ -144,80 +144,134 @@
   "minecraft:smooth_quartz": "quartz_block_bottom",
   "minecraft:quartz_bricks": "quartz_block_side",
 
-  "//": " --- Pnie drzew (log blocks) ---",
+  "//": " --- Pnie drzew (log blocks) - z obsługą orientacji osi ---",
   "minecraft:oak_log": {
     "top": "oak_log_top",
-    "side": "oak_log"
+    "side": "oak_log",
+    "x": "oak_log", // Gdy pień skierowany wzdłuż osi X
+    "y": "oak_log", // Gdy pień skierowany wzdłuż osi Y
+    "z": "oak_log_top" // Gdy pień skierowany wzdłuż osi Z (standardowo)
   },
   "minecraft:spruce_log": {
     "top": "spruce_log_top",
-    "side": "spruce_log"
+    "side": "spruce_log",
+    "x": "spruce_log",
+    "y": "spruce_log",
+    "z": "spruce_log_top"
   },
   "minecraft:birch_log": {
     "top": "birch_log_top",
-    "side": "birch_log"
+    "side": "birch_log",
+    "x": "birch_log",
+    "y": "birch_log",
+    "z": "birch_log_top"
   },
   "minecraft:jungle_log": {
     "top": "jungle_log_top",
-    "side": "jungle_log"
+    "side": "jungle_log",
+    "x": "jungle_log",
+    "y": "jungle_log",
+    "z": "jungle_log_top"
   },
   "minecraft:acacia_log": {
     "top": "acacia_log_top",
-    "side": "acacia_log"
+    "side": "acacia_log",
+    "x": "acacia_log",
+    "y": "acacia_log",
+    "z": "acacia_log_top"
   },
   "minecraft:dark_oak_log": {
     "top": "dark_oak_log_top",
-    "side": "dark_oak_log"
+    "side": "dark_oak_log",
+    "x": "dark_oak_log",
+    "y": "dark_oak_log",
+    "z": "dark_oak_log_top"
   },
   "minecraft:mangrove_log": {
     "top": "mangrove_log_top",
-    "side": "mangrove_log"
+    "side": "mangrove_log",
+    "x": "mangrove_log",
+    "y": "mangrove_log",
+    "z": "mangrove_log_top"
   },
   "minecraft:cherry_log": {
     "top": "cherry_log_top",
-    "side": "cherry_log"
+    "side": "cherry_log",
+    "x": "cherry_log",
+    "y": "cherry_log",
+    "z": "cherry_log_top"
   },
   "minecraft:bamboo_block": {
     "top": "bamboo_block_top",
-    "side": "bamboo_block"
+    "side": "bamboo_block",
+    "x": "bamboo_block",
+    "y": "bamboo_block",
+    "z": "bamboo_block_top"
   },
 
   "//": " --- Obrane pnie (stripped logs) ---",
   "minecraft:stripped_oak_log": {
     "top": "stripped_oak_log_top",
-    "side": "stripped_oak_log"
+    "side": "stripped_oak_log",
+    "x": "stripped_oak_log",
+    "y": "stripped_oak_log",
+    "z": "stripped_oak_log_top"
   },
   "minecraft:stripped_spruce_log": {
     "top": "stripped_spruce_log_top",
-    "side": "stripped_spruce_log"
+    "side": "stripped_spruce_log",
+    "x": "stripped_spruce_log",
+    "y": "stripped_spruce_log",
+    "z": "stripped_spruce_log_top"
   },
   "minecraft:stripped_birch_log": {
     "top": "stripped_birch_log_top",
-    "side": "stripped_birch_log"
+    "side": "stripped_birch_log",
+    "x": "stripped_birch_log",
+    "y": "stripped_birch_log",
+    "z": "stripped_birch_log_top"
   },
   "minecraft:stripped_jungle_log": {
     "top": "stripped_jungle_log_top",
-    "side": "stripped_jungle_log"
+    "side": "stripped_jungle_log",
+    "x": "stripped_jungle_log",
+    "y": "stripped_jungle_log",
+    "z": "stripped_jungle_log_top"
   },
   "minecraft:stripped_acacia_log": {
     "top": "stripped_acacia_log_top",
-    "side": "stripped_acacia_log"
+    "side": "stripped_acacia_log",
+    "x": "stripped_acacia_log",
+    "y": "stripped_acacia_log",
+    "z": "stripped_acacia_log_top"
   },
   "minecraft:stripped_dark_oak_log": {
     "top": "stripped_dark_oak_log_top",
-    "side": "stripped_dark_oak_log"
+    "side": "stripped_dark_oak_log",
+    "x": "stripped_dark_oak_log",
+    "y": "stripped_dark_oak_log",
+    "z": "stripped_dark_oak_log_top"
   },
   "minecraft:stripped_mangrove_log": {
     "top": "stripped_mangrove_log_top",
-    "side": "stripped_mangrove_log"
+    "side": "stripped_mangrove_log",
+    "x": "stripped_mangrove_log",
+    "y": "stripped_mangrove_log",
+    "z": "stripped_mangrove_log_top"
   },
   "minecraft:stripped_cherry_log": {
     "top": "stripped_cherry_log_top",
-    "side": "stripped_cherry_log"
+    "side": "stripped_cherry_log",
+    "x": "stripped_cherry_log",
+    "y": "stripped_cherry_log",
+    "z": "stripped_cherry_log_top"
   },
   "minecraft:stripped_bamboo_block": {
     "top": "stripped_bamboo_block_top",
-    "side": "stripped_bamboo_block"
+    "side": "stripped_bamboo_block",
+    "x": "stripped_bamboo_block",
+    "y": "stripped_bamboo_block",
+    "z": "stripped_bamboo_block_top"
   },
 
   "//": " --- Drewno (wood blocks) - wszystkie strony jak boki pni ---",
@@ -240,22 +294,36 @@
   "minecraft:stripped_mangrove_wood": "stripped_mangrove_log",
   "minecraft:stripped_cherry_wood": "stripped_cherry_log",
 
+  "//": " --- Filary i podobne bloki z orientacją ---",
+  "minecraft:quartz_pillar": {
+    "top": "quartz_pillar_top",
+    "side": "quartz_pillar",
+    "x": "quartz_pillar",
+    "y": "quartz_pillar",
+    "z": "quartz_pillar_top"
+  },
+  "minecraft:purpur_pillar": {
+    "top": "purpur_pillar_top",
+    "side": "purpur_pillar",
+    "x": "purpur_pillar",
+    "y": "purpur_pillar",
+    "z": "purpur_pillar_top"
+  },
+
   "//": " --- Bale siana i podobne ---",
   "minecraft:hay_block": {
     "top": "hay_block_top",
-    "side": "hay_block_side"
+    "side": "hay_block_side",
+    "x": "hay_block_side",
+    "y": "hay_block_side",
+    "z": "hay_block_top"
   },
   "minecraft:target": {
     "top": "target_top",
-    "side": "target_side"
-  },
-
-  "//": " --- Bloki kamienia z różnymi teksturami ---",
-  "minecraft:end_stone_bricks": "end_stone_bricks",
-  "minecraft:purpur_block": "purpur_block",
-  "minecraft:purpur_pillar": {
-    "top": "purpur_pillar_top",
-    "side": "purpur_pillar"
+    "side": "target_side",
+    "x": "target_side",
+    "y": "target_side",
+    "z": "target_top"
   },
 
   "//": " --- Bloki betonu ---",
@@ -401,8 +469,93 @@
     "bottom": "sea_lantern"
   },
 
-  "//": " --- Spawner ---",
-  "minecraft:spawner": "spawner",
+  "//": " --- Crafting blocks ---",
+  "minecraft:crafting_table": {
+    "top": "crafting_table_top",
+    "side": "crafting_table_front",
+    "bottom": "oak_planks"
+  },
+  "minecraft:cartography_table": {
+    "top": "cartography_table_top",
+    "side": "cartography_table_side1",
+    "bottom": "dark_oak_planks"
+  },
+  "minecraft:fletching_table": {
+    "top": "fletching_table_top",
+    "side": "fletching_table_front",
+    "bottom": "birch_planks"
+  },
+  "minecraft:smithing_table": {
+    "top": "smithing_table_top",
+    "side": "smithing_table_front",
+    "bottom": "smithing_table_bottom"
+  },
+  "minecraft:loom": {
+    "top": "loom_top",
+    "side": "loom_front",
+    "bottom": "loom_bottom"
+  },
+  "minecraft:stonecutter": {
+    "top": "stonecutter_top",
+    "side": "stonecutter_side",
+    "bottom": "stonecutter_bottom"
+  },
+  "minecraft:grindstone": {
+    "top": "grindstone_top",
+    "side": "grindstone_side"
+  },
+  "minecraft:anvil": {
+    "top": "anvil_top",
+    "side": "anvil"
+  },
+  "minecraft:chipped_anvil": {
+    "top": "chipped_anvil_top",
+    "side": "chipped_anvil"
+  },
+  "minecraft:damaged_anvil": {
+    "top": "damaged_anvil_top",
+    "side": "damaged_anvil"
+  },
+  "minecraft:enchanting_table": {
+    "top": "enchanting_table_top",
+    "side": "enchanting_table_side",
+    "bottom": "enchanting_table_bottom"
+  },
+  "minecraft:brewing_stand": "brewing_stand",
+  "minecraft:cauldron": {
+    "top": "cauldron_top",
+    "side": "cauldron_side",
+    "bottom": "cauldron_bottom"
+  },
+  "minecraft:composter": {
+    "top": "composter_top",
+    "side": "composter_side",
+    "bottom": "composter_bottom",
+    "properties": {
+      "level": {
+        "1": { "top": "composter_compost" },
+        "2": { "top": "composter_compost" },
+        "3": { "top": "composter_compost" },
+        "4": { "top": "composter_compost" },
+        "5": { "top": "composter_compost" },
+        "6": { "top": "composter_compost" },
+        "7": { "top": "composter_compost" },
+        "8": { "top": "composter_ready" }
+      }
+    }
+  },
+  "minecraft:barrel": {
+    "top": "barrel_top",
+    "side": "barrel_side",
+    "bottom": "barrel_bottom",
+    "properties": {
+      "open": {
+        "true": {
+          "top": "barrel_top_open"
+        }
+      }
+    }
+  },
 
   "//": " --- Inne specjalne bloki ---",
   "minecraft:observer": {

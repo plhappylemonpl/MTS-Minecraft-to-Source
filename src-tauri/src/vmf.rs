@@ -35,15 +35,22 @@ pub struct VmfSolid {
     pub sides: Vec<VmfSide>,
 }
 
-// Struktura dla konfiguracji materiału z obsługą properties
+// Struktura dla konfiguracji materiału z obsługą properties i różnych orientacji
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 enum MaterialConfig {
     Simple(String),
     Complex {
+        // Standardowe mapowanie (dla bloków pionowych)
         top: Option<String>,
         side: Option<String>,
         bottom: Option<String>,
+        
+        // Mapowanie dla różnych orientacji osi
+        x: Option<String>,  // Strony prostopadłe do osi X (East/West)
+        y: Option<String>,  // Strony prostopadłe do osi Y (North/South) 
+        z: Option<String>,  // Strony prostopadłe do osi Z (Top/Bottom)
+        
         properties: Option<HashMap<String, HashMap<String, MaterialOverride>>>,
     },
 }
@@ -158,6 +165,9 @@ fn load_material_config() -> HashMap<String, MaterialConfig> {
                         let top = obj.get("top").and_then(|v| v.as_str()).map(String::from);
                         let side = obj.get("side").and_then(|v| v.as_str()).map(String::from);
                         let bottom = obj.get("bottom").and_then(|v| v.as_str()).map(String::from);
+                        let x = obj.get("x").and_then(|v| v.as_str()).map(String::from);
+                        let y = obj.get("y").and_then(|v| v.as_str()).map(String::from);
+                        let z = obj.get("z").and_then(|v| v.as_str()).map(String::from);
                         
                         // Parsowanie properties
                         let properties = obj.get("properties")
@@ -193,7 +203,7 @@ fn load_material_config() -> HashMap<String, MaterialConfig> {
                                 properties_map
                             });
                         
-                        config.insert(key, MaterialConfig::Complex { top, side, bottom, properties });
+                        config.insert(key, MaterialConfig::Complex { top, side, bottom, x, y, z, properties });
                     }
                     _ => {} // Ignorujemy inne typy
                 }
@@ -224,11 +234,16 @@ fn get_material_for_side(
             MaterialConfig::Simple(texture) => {
                 return format!("{}{}", MATERIAL_PREFIX, texture);
             }
-            MaterialConfig::Complex { top, side: side_texture, bottom, properties: config_properties } => {
+            MaterialConfig::Complex { top, side: side_texture, bottom, x, y, z, properties: config_properties } => {
                 // Domyślne tekstury dla tego bloku
                 let mut final_top = top.as_ref();
                 let mut final_side = side_texture.as_ref();
                 let mut final_bottom = bottom.as_ref();
+                
+                // Jeśli są definicje dla osi, użyj ich jako fallback
+                let axis_x = x.as_ref();
+                let axis_y = y.as_ref(); 
+                let axis_z = z.as_ref();
                 
                 // Sprawdź properties i nadpisz tekstury jeśli potrzeba
                 if let Some(config_props) = config_properties {
@@ -250,16 +265,23 @@ fn get_material_for_side(
                     }
                 }
                 
-                // Wybierz odpowiednią teksturę dla strony
+                // Wybierz odpowiednią teksturę dla strony z uwzględnieniem orientacji osi
                 let texture = match side {
                     BlockSide::Top => {
-                        final_top.or(final_side)
+                        // Top: najpierw sprawdź axis_z, potem top, potem side
+                        axis_z.or(final_top).or(final_side)
                     }
                     BlockSide::Bottom => {
-                        final_bottom.or(final_side)
+                        // Bottom: najpierw sprawdź axis_z, potem bottom, potem side  
+                        axis_z.or(final_bottom).or(final_side)
                     }
-                    BlockSide::North | BlockSide::South | BlockSide::East | BlockSide::West => {
-                        final_side
+                    BlockSide::North | BlockSide::South => {
+                        // North/South (oś Y): sprawdź axis_y, potem side
+                        axis_y.or(final_side)
+                    }
+                    BlockSide::East | BlockSide::West => {
+                        // East/West (oś X): sprawdź axis_x, potem side
+                        axis_x.or(final_side)
                     }
                 };
                 
