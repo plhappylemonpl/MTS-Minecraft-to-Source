@@ -1,0 +1,452 @@
+{
+  "//": "==================================================================================",
+  "//": " Plik konfiguracyjny materiałów dla MTS (Minecraft to Source)",
+  "//": "==================================================================================",
+  "//": " Ten plik definiuje wyjątki dla bloków, które mają niestandardowe tekstury.",
+  "//": " Jeśli bloku nie ma na tej liście, program użyje jego nazwy jako domyślnej tekstury na wszystkich stronach.",
+  "//": " Format konfiguracji bloków:",
+  "//": " - Prosty string: używa tej samej tekstury na wszystkich stronach",
+  "//": " - Obiekt z top/side/bottom: różne tekstury dla różnych stron",
+  "//": " - properties: obsługa stanów bloku (lit, smooth, waterlogged itp.)",
+  "//": "==================================================================================",
+
+  "//": " --- Bloki z teksturami góra/boki/dół ---",
+  "minecraft:podzol": {
+    "top": "podzol_top",
+    "side": "podzol_side",
+    "bottom": "dirt"
+  },
+  "minecraft:grass_block": {
+    "top": "grass_block_top",
+    "side": "grass_block_side",
+    "bottom": "dirt"
+  },
+  "minecraft:mycelium": {
+    "top": "mycelium_top",
+    "side": "mycelium_side",
+    "bottom": "dirt"
+  },
+  "minecraft:bookshelf": {
+    "top": "oak_planks",
+    "side": "bookshelf",
+    "bottom": "oak_planks"
+  },
+  "minecraft:tnt": {
+    "top": "tnt_top",
+    "side": "tnt_side",
+    "bottom": "tnt_bottom"
+  },
+  "minecraft:melon": {
+    "top": "melon_top",
+    "side": "melon_side",
+    "bottom": "melon_top"
+  },
+  "minecraft:dried_kelp_block": {
+    "top": "dried_kelp_top",
+    "side": "dried_kelp_side",
+    "bottom": "dried_kelp_bottom"
+  },
+  "minecraft:reinforced_deepslate": {
+    "top": "reinforced_deepslate_top",
+    "side": "reinforced_deepslate_side",
+    "bottom": "reinforced_deepslate_bottom"
+  },
+  "minecraft:sculk_catalyst": {
+    "top": "sculk_catalyst_top",
+    "side": "sculk_catalyst_side",
+    "bottom": "sculk_catalyst_bottom"
+  },
+  "minecraft:respawn_anchor": {
+    "top": "respawn_anchor_top_off",
+    "side": "respawn_anchor_side0",
+    "bottom": "respawn_anchor_bottom",
+    "properties": {
+      "charges": {
+        "1": {
+          "top": "respawn_anchor_top",
+          "side": "respawn_anchor_side1"
+        },
+        "2": {
+          "top": "respawn_anchor_top",
+          "side": "respawn_anchor_side2"
+        },
+        "3": {
+          "top": "respawn_anchor_top",
+          "side": "respawn_anchor_side3"
+        },
+        "4": {
+          "top": "respawn_anchor_top",
+          "side": "respawn_anchor_side4"
+        }
+      }
+    }
+  },
+
+  "//": " --- Bloki typu 'pień' (logika góra/boki) ---",
+  "minecraft:mangrove_roots": {
+    "top": "mangrove_roots_top",
+    "side": "mangrove_roots_side"
+  },
+  "minecraft:muddy_mangrove_roots": {
+    "top": "muddy_mangrove_roots_top",
+    "side": "muddy_mangrove_roots_side"
+  },
+  "minecraft:quartz_pillar": {
+    "top": "quartz_pillar_top",
+    "side": "quartz_pillar"
+  },
+  "minecraft:chiseled_quartz_block": {
+    "top": "chiseled_quartz_block_top",
+    "side": "chiseled_quartz_block"
+  },
+
+  "//": " --- Warianty piaskowca ---",
+  "minecraft:sandstone": {
+    "top": "sandstone_top",
+    "side": "sandstone",
+    "bottom": "sandstone_bottom"
+  },
+  "minecraft:chiseled_sandstone": {
+    "top": "sandstone_top",
+    "side": "chiseled_sandstone",
+    "bottom": "sandstone_bottom"
+  },
+  "minecraft:cut_sandstone": {
+    "top": "sandstone_top",
+    "side": "cut_sandstone",
+    "bottom": "sandstone_bottom"
+  },
+  "minecraft:smooth_sandstone": "sandstone_top",
+
+  "minecraft:red_sandstone": {
+    "top": "red_sandstone_top",
+    "side": "red_sandstone",
+    "bottom": "red_sandstone_bottom"
+  },
+  "minecraft:chiseled_red_sandstone": {
+    "top": "red_sandstone_top",
+    "side": "chiseled_red_sandstone",
+    "bottom": "red_sandstone_bottom"
+  },
+  "minecraft:cut_red_sandstone": {
+    "top": "red_sandstone_top",
+    "side": "cut_red_sandstone",
+    "bottom": "red_sandstone_bottom"
+  },
+  "minecraft:smooth_red_sandstone": "red_sandstone_top",
+
+  "//": " --- Warianty kwarcu ---",
+  "minecraft:quartz_block": {
+    "top": "quartz_block_top",
+    "side": "quartz_block_side",
+    "bottom": "quartz_block_bottom"
+  },
+  "minecraft:smooth_quartz": "quartz_block_bottom",
+  "minecraft:quartz_bricks": "quartz_block_side",
+
+  "//": " --- Pnie drzew (log blocks) ---",
+  "minecraft:oak_log": {
+    "top": "oak_log_top",
+    "side": "oak_log"
+  },
+  "minecraft:spruce_log": {
+    "top": "spruce_log_top",
+    "side": "spruce_log"
+  },
+  "minecraft:birch_log": {
+    "top": "birch_log_top",
+    "side": "birch_log"
+  },
+  "minecraft:jungle_log": {
+    "top": "jungle_log_top",
+    "side": "jungle_log"
+  },
+  "minecraft:acacia_log": {
+    "top": "acacia_log_top",
+    "side": "acacia_log"
+  },
+  "minecraft:dark_oak_log": {
+    "top": "dark_oak_log_top",
+    "side": "dark_oak_log"
+  },
+  "minecraft:mangrove_log": {
+    "top": "mangrove_log_top",
+    "side": "mangrove_log"
+  },
+  "minecraft:cherry_log": {
+    "top": "cherry_log_top",
+    "side": "cherry_log"
+  },
+  "minecraft:bamboo_block": {
+    "top": "bamboo_block_top",
+    "side": "bamboo_block"
+  },
+
+  "//": " --- Obrane pnie (stripped logs) ---",
+  "minecraft:stripped_oak_log": {
+    "top": "stripped_oak_log_top",
+    "side": "stripped_oak_log"
+  },
+  "minecraft:stripped_spruce_log": {
+    "top": "stripped_spruce_log_top",
+    "side": "stripped_spruce_log"
+  },
+  "minecraft:stripped_birch_log": {
+    "top": "stripped_birch_log_top",
+    "side": "stripped_birch_log"
+  },
+  "minecraft:stripped_jungle_log": {
+    "top": "stripped_jungle_log_top",
+    "side": "stripped_jungle_log"
+  },
+  "minecraft:stripped_acacia_log": {
+    "top": "stripped_acacia_log_top",
+    "side": "stripped_acacia_log"
+  },
+  "minecraft:stripped_dark_oak_log": {
+    "top": "stripped_dark_oak_log_top",
+    "side": "stripped_dark_oak_log"
+  },
+  "minecraft:stripped_mangrove_log": {
+    "top": "stripped_mangrove_log_top",
+    "side": "stripped_mangrove_log"
+  },
+  "minecraft:stripped_cherry_log": {
+    "top": "stripped_cherry_log_top",
+    "side": "stripped_cherry_log"
+  },
+  "minecraft:stripped_bamboo_block": {
+    "top": "stripped_bamboo_block_top",
+    "side": "stripped_bamboo_block"
+  },
+
+  "//": " --- Drewno (wood blocks) - wszystkie strony jak boki pni ---",
+  "minecraft:oak_wood": "oak_log",
+  "minecraft:spruce_wood": "spruce_log",
+  "minecraft:birch_wood": "birch_log",
+  "minecraft:jungle_wood": "jungle_log",
+  "minecraft:acacia_wood": "acacia_log",
+  "minecraft:dark_oak_wood": "dark_oak_log",
+  "minecraft:mangrove_wood": "mangrove_log",
+  "minecraft:cherry_wood": "cherry_log",
+
+  "//": " --- Obrane drewno (stripped wood) ---",
+  "minecraft:stripped_oak_wood": "stripped_oak_log",
+  "minecraft:stripped_spruce_wood": "stripped_spruce_log",
+  "minecraft:stripped_birch_wood": "stripped_birch_log",
+  "minecraft:stripped_jungle_wood": "stripped_jungle_log",
+  "minecraft:stripped_acacia_wood": "stripped_acacia_log",
+  "minecraft:stripped_dark_oak_wood": "stripped_dark_oak_log",
+  "minecraft:stripped_mangrove_wood": "stripped_mangrove_log",
+  "minecraft:stripped_cherry_wood": "stripped_cherry_log",
+
+  "//": " --- Bale siana i podobne ---",
+  "minecraft:hay_block": {
+    "top": "hay_block_top",
+    "side": "hay_block_side"
+  },
+  "minecraft:target": {
+    "top": "target_top",
+    "side": "target_side"
+  },
+
+  "//": " --- Bloki kamienia z różnymi teksturami ---",
+  "minecraft:end_stone_bricks": "end_stone_bricks",
+  "minecraft:purpur_block": "purpur_block",
+  "minecraft:purpur_pillar": {
+    "top": "purpur_pillar_top",
+    "side": "purpur_pillar"
+  },
+
+  "//": " --- Bloki betonu ---",
+  "minecraft:white_concrete": "white_concrete",
+  "minecraft:orange_concrete": "orange_concrete",
+  "minecraft:magenta_concrete": "magenta_concrete",
+  "minecraft:light_blue_concrete": "light_blue_concrete",
+  "minecraft:yellow_concrete": "yellow_concrete",
+  "minecraft:lime_concrete": "lime_concrete",
+  "minecraft:pink_concrete": "pink_concrete",
+  "minecraft:gray_concrete": "gray_concrete",
+  "minecraft:light_gray_concrete": "light_gray_concrete",
+  "minecraft:cyan_concrete": "cyan_concrete",
+  "minecraft:purple_concrete": "purple_concrete",
+  "minecraft:blue_concrete": "blue_concrete",
+  "minecraft:brown_concrete": "brown_concrete",
+  "minecraft:green_concrete": "green_concrete",
+  "minecraft:red_concrete": "red_concrete",
+  "minecraft:black_concrete": "black_concrete",
+
+  "//": " --- Liście (specjalne przypadki) ---",
+  "minecraft:jungle_leaves": "jungle_leaves_y",
+
+  "//": " --- Bloki z pojedynczą, niestandardową teksturą ---",
+  "minecraft:snow_block": "snow",
+  "minecraft:magma_block": "magma",
+  "minecraft:glowstone": "glowstone",
+  "minecraft:jack_o_lantern": {
+    "top": "pumpkin_top",
+    "side": "jack_o_lantern",
+    "bottom": "pumpkin_top"
+  },
+  "minecraft:pumpkin": {
+    "top": "pumpkin_top",
+    "side": "pumpkin_side",
+    "bottom": "pumpkin_top"
+  },
+  "minecraft:carved_pumpkin": {
+    "top": "pumpkin_top",
+    "side": "carved_pumpkin",
+    "bottom": "pumpkin_top"
+  },
+
+  "//": " --- Lampy z obsługą lit ---",
+  "minecraft:redstone_lamp": {
+    "top": "redstone_lamp",
+    "side": "redstone_lamp",
+    "bottom": "redstone_lamp",
+    "properties": {
+      "lit": {
+        "true": {
+          "top": "redstone_lamp_on",
+          "side": "redstone_lamp_on",
+          "bottom": "redstone_lamp_on"
+        }
+      }
+    }
+  },
+
+  "//": " --- Piece i podobne bloki ---",
+  "minecraft:furnace": {
+    "top": "furnace_top",
+    "side": "furnace_front",
+    "bottom": "furnace_top",
+    "properties": {
+      "lit": {
+        "true": {
+          "side": "furnace_front_on"
+        }
+      },
+      "facing": {
+        "north": { "side": "furnace_front" },
+        "south": { "side": "furnace_front" },
+        "east": { "side": "furnace_front" },
+        "west": { "side": "furnace_front" }
+      }
+    }
+  },
+
+  "minecraft:blast_furnace": {
+    "top": "blast_furnace_top",
+    "side": "blast_furnace_front",
+    "bottom": "blast_furnace_top",
+    "properties": {
+      "lit": {
+        "true": {
+          "side": "blast_furnace_front_on"
+        }
+      }
+    }
+  },
+
+  "minecraft:smoker": {
+    "top": "smoker_top",
+    "side": "smoker_front",
+    "bottom": "smoker_bottom",
+    "properties": {
+      "lit": {
+        "true": {
+          "side": "smoker_front_on"
+        }
+      }
+    }
+  },
+
+  "//": " --- Dyspensery i podajniki ---",
+  "minecraft:dispenser": {
+    "top": "dispenser_front_vertical",
+    "side": "dispenser_front",
+    "bottom": "dispenser_front_vertical",
+    "properties": {
+      "facing": {
+        "up": {
+          "top": "dispenser_front_vertical"
+        },
+        "down": {
+          "bottom": "dispenser_front_vertical"
+        }
+      }
+    }
+  },
+
+  "minecraft:dropper": {
+    "top": "dropper_front_vertical",
+    "side": "dropper_front",
+    "bottom": "dropper_front_vertical",
+    "properties": {
+      "facing": {
+        "up": {
+          "top": "dropper_front_vertical"
+        },
+        "down": {
+          "bottom": "dropper_front_vertical"
+        }
+      }
+    }
+  },
+
+  "//": " --- Bloki z waterlogged ---",
+  "minecraft:sea_lantern": {
+    "top": "sea_lantern",
+    "side": "sea_lantern",
+    "bottom": "sea_lantern"
+  },
+
+  "//": " --- Spawner ---",
+  "minecraft:spawner": "spawner",
+
+  "//": " --- Inne specjalne bloki ---",
+  "minecraft:observer": {
+    "top": "observer_top",
+    "side": "observer_side",
+    "bottom": "observer_back",
+    "properties": {
+      "powered": {
+        "true": {
+          "bottom": "observer_back_on"
+        }
+      }
+    }
+  },
+
+  "//": " --- Bloki z różnymi stanami ---",
+  "minecraft:campfire": {
+    "top": "campfire",
+    "side": "campfire_log",
+    "bottom": "campfire_log",
+    "properties": {
+      "lit": {
+        "false": {
+          "top": "campfire_fire"
+        }
+      },
+      "waterlogged": {
+        "true": {
+          "top": "campfire_fire"
+        }
+      }
+    }
+  },
+
+  "minecraft:soul_campfire": {
+    "top": "soul_campfire",
+    "side": "soul_campfire_log_lit",
+    "bottom": "soul_campfire_log_lit",
+    "properties": {
+      "lit": {
+        "false": {
+          "top": "soul_campfire_fire"
+        }
+      }
+    }
+  }
+}
