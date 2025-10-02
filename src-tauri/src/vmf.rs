@@ -223,7 +223,7 @@ fn get_material_for_side(
     side: BlockSide, 
     config: &HashMap<String, MaterialConfig>
 ) -> String {
-    const MATERIAL_PREFIX: &str = "mc_1.21.4/";
+    const MATERIAL_PREFIX: &str = "mc_1.21.8/";
     
     // Parsuj block name i properties
     let (base_name, properties) = parse_block_properties(block_name);
