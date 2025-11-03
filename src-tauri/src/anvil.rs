@@ -1,4 +1,5 @@
-// Zmieniamy importy, aby zaimportować cechę `Chunk` i nadać alias `CompleteChunk` strukturze.
+// anvil.rs - używa encoded properties z fastanvil
+
 use fastanvil::{complete::Chunk as CompleteChunk, Chunk, Region};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -22,8 +23,30 @@ pub struct MinecraftBlock {
     pub block_type: String,
 }
 
-/// Checks if a chunk is "empty" based on the defined criteria.
-/// An empty chunk contains only air, barrier blocks, or a single, flat layer of bedrock.
+/// Konwertuje encoded format z fastanvil (z |) na format z nawiasami []
+/// Obsługuje wszystkie properties, nie tylko snowy
+fn convert_encoded_to_bracket_format(encoded: &str) -> String {
+    // encoded format może być:
+    // - "minecraft:grass_block|snowy=true"
+    // - "minecraft:oak_log|axis=y"
+    // - "minecraft:furnace|facing=north,lit=true"
+    // target format: "minecraft:block_name[property1=value1,property2=value2]"
+    
+    if let Some(pipe_pos) = encoded.find('|') {
+        let base = &encoded[..pipe_pos];
+        let properties = &encoded[pipe_pos + 1..];
+        
+        // Zastąp separator | na , jeśli jest wiele properties (fastanvil może używać różnych formatów)
+        let properties_clean = properties.replace('|', ",");
+        
+        format!("{}[{}]", base, properties_clean)
+    } else {
+        // Brak properties - zwróć tylko nazwę bloku
+        encoded.to_string()
+    }
+}
+
+/// Sprawdza czy chunk jest "pusty"
 fn is_chunk_empty(chunk: &CompleteChunk) -> bool {
     let mut bedrock_y: Option<isize> = None;
 
@@ -32,31 +55,31 @@ fn is_chunk_empty(chunk: &CompleteChunk) -> bool {
             for z in 0..16_u8 {
                 let block = match chunk.block(x.into(), y, z.into()) {
                     Some(b) => b,
-                    None => continue, // Skip air blocks
+                    None => continue,
                 };
 
                 match block.name() {
                     "minecraft:air" | "minecraft:barrier" => {
-                        continue; // These blocks don't make the chunk non-empty
+                        continue;
                     }
                     "minecraft:bedrock" => {
                         if let Some(known_y) = bedrock_y {
                             if known_y != y {
-                                return false; // Not a flat layer of bedrock
+                                return false;
                             }
                         } else {
-                            bedrock_y = Some(y); // First bedrock layer found
+                            bedrock_y = Some(y);
                         }
                     }
                     _ => {
-                        return false; // Found a non-air, non-barrier, non-bedrock block
+                        return false;
                     }
                 }
             }
         }
     }
 
-    true // Chunk contains only air, barriers, or a single layer of bedrock
+    true
 }
 
 fn get_blocks_data<F>(
@@ -103,7 +126,7 @@ where
             let chunk_x = region_x * 32 + chunk_data.x as i32;
             let chunk_z = region_z * 32 + chunk_data.z as i32;
 
-             if !dynamic {
+            if !dynamic {
                 if let Some((min_cx, max_cx, min_cz, max_cz)) = chunk_coords {
                     if chunk_x < min_cx || chunk_x > max_cx || chunk_z < min_cz || chunk_z > max_cz {
                         continue;
@@ -111,7 +134,6 @@ where
                 }
             }
 
-            // Tworzymy obiekt używając aliasu `CompleteChunk`.
             let chunk = CompleteChunk::from_bytes(&chunk_data.data).map_err(|e| e.to_string())?;
 
             if dynamic && is_chunk_empty(&chunk) {
@@ -127,15 +149,39 @@ where
                 for x in 0..16_u8 {
                     for z in 0..16_u8 {
                         if let Some(block) = chunk.block(x.into(), y, z.into()) {
-                            if block.name() != "minecraft:air" && block.name() != "minecraft:barrier" {
+                            let block_name = block.name();
+                            if block_name != "minecraft:air" && block_name != "minecraft:barrier" {
                                 let world_x = chunk_x * 16 + x as i32;
                                 let world_z = chunk_z * 16 + z as i32;
+                                
+                                // Wyciągnij properties z fastanvil Block
+                                // Debug format: Block { name: "...", encoded: "minecraft:grass_block|snowy=true", ... }
+                                let debug_str = format!("{:?}", block);
+                                
+                                let final_block_type = if let Some(start) = debug_str.find("encoded: \"") {
+                                    let start_pos = start + 10; // długość "encoded: \""
+                                    if let Some(end_pos) = debug_str[start_pos..].find('"') {
+                                        let encoded = &debug_str[start_pos..start_pos + end_pos];
+                                        let converted = convert_encoded_to_bracket_format(encoded);
+                                        
+                                        // Debug: pokaż bloki z properties
+                                        if converted.contains('[') {
+                                            println!("[PROPERTIES_DEBUG] Block: {} -> {}", block_name, converted);
+                                        }
+                                        
+                                        converted
+                                    } else {
+                                        block_name.to_string()
+                                    }
+                                } else {
+                                    block_name.to_string()
+                                };
                                 
                                 blocks.push(MinecraftBlock {
                                     x: world_x,
                                     y: y as i32,
                                     z: world_z,
-                                    block_type: block.name().to_string(),
+                                    block_type: final_block_type,
                                 });
                                 _blocks_in_chunk += 1;
                                 blocks_in_region += 1;
@@ -145,7 +191,6 @@ where
                 }
             }
             
-            // Debug co 100 chunków
             if chunks_in_region % 100 == 0 {
                 println!("[DEBUG] Processed {} chunks in current region, {} blocks found so far", 
                     chunks_in_region, blocks_in_region);

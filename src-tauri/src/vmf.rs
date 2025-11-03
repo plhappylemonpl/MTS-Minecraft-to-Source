@@ -1,5 +1,5 @@
 use std::io::Write;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use tauri::Emitter;
 use serde::{Serialize, Deserialize};
 
@@ -35,35 +35,39 @@ pub struct VmfSolid {
     pub sides: Vec<VmfSide>,
 }
 
-// Struktura dla konfiguracji materiału z obsługą properties i różnych orientacji
+// Struktura dla zoptymalizowanego bloku (może być większy niż 1x1x1)
+#[derive(Debug, Clone)]
+struct OptimizedBlock {
+    x: i32,
+    y: i32,
+    z: i32,
+    width: i32,   // rozmiar w osi X
+    height: i32,  // rozmiar w osi Z (Y w Minecrafcie)
+    depth: i32,   // rozmiar w osi Y (Z w Minecrafcie)
+    block_type: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 enum MaterialConfig {
     Simple(String),
     Complex {
-        // Standardowe mapowanie (dla bloków pionowych)
         top: Option<String>,
         side: Option<String>,
         bottom: Option<String>,
-        
-        // Mapowanie dla różnych orientacji osi
-        x: Option<String>,  // Strony prostopadłe do osi X (East/West)
-        y: Option<String>,  // Strony prostopadłe do osi Y (North/South) 
-        z: Option<String>,  // Strony prostopadłe do osi Z (Top/Bottom)
-        
+        front: Option<String>,
+        end: Option<String>,
         properties: Option<HashMap<String, HashMap<String, MaterialOverride>>>,
     },
 }
 
-// Struktura dla nadpisywania materiałów na podstawie properties
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct MaterialOverride {
     top: Option<String>,
-    side: Option<String>, 
+    side: Option<String>,
     bottom: Option<String>,
 }
 
-// Enum dla stron bloku
 #[derive(Debug, Clone, Copy)]
 enum BlockSide {
     Top,
@@ -117,7 +121,6 @@ fn calculate_batch_size() -> usize {
     max_solids.max(1000).min(20000)
 }
 
-// Funkcja parsująca properties z nazwy bloku (Minecraft 1.13+ format)
 fn parse_block_properties(block_name: &str) -> (String, HashMap<String, String>) {
     if let Some(bracket_pos) = block_name.find('[') {
         let base_name = &block_name[..bracket_pos];
@@ -139,11 +142,9 @@ fn parse_block_properties(block_name: &str) -> (String, HashMap<String, String>)
         }
     }
     
-    // Brak properties - zwróć tylko nazwę bloku
     (block_name.to_string(), HashMap::new())
 }
 
-// Ładowanie konfiguracji materiałów
 fn load_material_config() -> HashMap<String, MaterialConfig> {
     let config_content = include_str!("../material_config.json");
     
@@ -152,7 +153,6 @@ fn load_material_config() -> HashMap<String, MaterialConfig> {
             let mut config = HashMap::new();
             
             for (key, value) in raw_config {
-                // Pomijamy komentarze (klucze zaczynające się od "//")
                 if key.starts_with("//") {
                     continue;
                 }
@@ -165,11 +165,9 @@ fn load_material_config() -> HashMap<String, MaterialConfig> {
                         let top = obj.get("top").and_then(|v| v.as_str()).map(String::from);
                         let side = obj.get("side").and_then(|v| v.as_str()).map(String::from);
                         let bottom = obj.get("bottom").and_then(|v| v.as_str()).map(String::from);
-                        let x = obj.get("x").and_then(|v| v.as_str()).map(String::from);
-                        let y = obj.get("y").and_then(|v| v.as_str()).map(String::from);
-                        let z = obj.get("z").and_then(|v| v.as_str()).map(String::from);
+                        let front = obj.get("front").and_then(|v| v.as_str()).map(String::from);
+                        let end = obj.get("end").and_then(|v| v.as_str()).map(String::from);
                         
-                        // Parsowanie properties
                         let properties = obj.get("properties")
                             .and_then(|v| v.as_object())
                             .map(|props_obj| {
@@ -203,16 +201,18 @@ fn load_material_config() -> HashMap<String, MaterialConfig> {
                                 properties_map
                             });
                         
-                        config.insert(key, MaterialConfig::Complex { top, side, bottom, x, y, z, properties });
+                        config.insert(key, MaterialConfig::Complex { 
+                            top, side, bottom, front, end, properties 
+                        });
                     }
-                    _ => {} // Ignorujemy inne typy
+                    _ => {}
                 }
             }
             
             config
         }
         Err(e) => {
-            println!("[WARNING] Failed to parse material_config.json: {}. Using default materials.", e);
+            println!("[WARNING] Failed to parse material_config.json: {}. Using auto-detection.", e);
             HashMap::new()
         }
     }
@@ -225,63 +225,48 @@ fn get_material_for_side(
 ) -> String {
     const MATERIAL_PREFIX: &str = "mc_1.21.8/";
     
-    // Parsuj block name i properties
     let (base_name, properties) = parse_block_properties(block_name);
     
-    // Sprawdź czy blok ma specjalną konfigurację
     if let Some(material_config) = config.get(&base_name) {
         match material_config {
             MaterialConfig::Simple(texture) => {
                 return format!("{}{}", MATERIAL_PREFIX, texture);
             }
-            MaterialConfig::Complex { top, side: side_texture, bottom, x, y, z, properties: config_properties } => {
-                // Domyślne tekstury dla tego bloku
-                let mut final_top = top.as_ref();
-                let mut final_side = side_texture.as_ref();
-                let mut final_bottom = bottom.as_ref();
+            MaterialConfig::Complex { top, side: side_texture, bottom, front, end, properties: config_properties } => {
+                let mut final_top = top.clone();
+                let mut final_side = side_texture.clone();
+                let mut final_bottom = bottom.clone();
                 
-                // Jeśli są definicje dla osi, użyj ich jako fallback
-                let axis_x = x.as_ref();
-                let axis_y = y.as_ref(); 
-                let axis_z = z.as_ref();
-                
-                // Sprawdź properties i nadpisz tekstury jeśli potrzeba
                 if let Some(config_props) = config_properties {
                     for (prop_name, prop_value) in &properties {
                         if let Some(prop_config) = config_props.get(prop_name) {
                             if let Some(override_config) = prop_config.get(prop_value) {
-                                // Nadpisz tekstury jeśli są zdefiniowane w override
                                 if override_config.top.is_some() {
-                                    final_top = override_config.top.as_ref();
+                                    final_top = override_config.top.clone();
                                 }
                                 if override_config.side.is_some() {
-                                    final_side = override_config.side.as_ref();
+                                    final_side = override_config.side.clone();
                                 }
                                 if override_config.bottom.is_some() {
-                                    final_bottom = override_config.bottom.as_ref();
+                                    final_bottom = override_config.bottom.clone();
                                 }
                             }
                         }
                     }
                 }
                 
-                // Wybierz odpowiednią teksturę dla strony z uwzględnieniem orientacji osi
                 let texture = match side {
                     BlockSide::Top => {
-                        // Top: najpierw sprawdź axis_z, potem top, potem side
-                        axis_z.or(final_top).or(final_side)
+                        final_top.or(final_side)
                     }
                     BlockSide::Bottom => {
-                        // Bottom: najpierw sprawdź axis_z, potem bottom, potem side  
-                        axis_z.or(final_bottom).or(final_side)
+                        final_bottom.or(final_side)
                     }
                     BlockSide::North | BlockSide::South => {
-                        // North/South (oś Y): sprawdź axis_y, potem side
-                        axis_y.or(final_side)
+                        front.clone().or(final_side)
                     }
                     BlockSide::East | BlockSide::West => {
-                        // East/West (oś X): sprawdź axis_x, potem side
-                        axis_x.or(final_side)
+                        end.clone().or(final_side)
                     }
                 };
                 
@@ -292,7 +277,6 @@ fn get_material_for_side(
         }
     }
     
-    // Domyślna logika - usuń "minecraft:" i użyj nazwy bloku jako tekstury na wszystkich stronach
     let clean_name = if let Some(stripped) = base_name.strip_prefix("minecraft:") {
         stripped
     } else {
@@ -302,11 +286,121 @@ fn get_material_for_side(
     format!("{}{}", MATERIAL_PREFIX, clean_name)
 }
 
-// POPRAWIONA funkcja tworzenia kostki z obsługą różnych materiałów i automatycznym dopasowaniem tekstur
-fn create_cube_solid(block: &VmfBlock, block_size: i32, config: &HashMap<String, MaterialConfig>) -> VmfSolid {
+// NOWA FUNKCJA: Optymalizacja bloków przez łączenie sąsiadujących
+fn optimize_blocks(blocks: Vec<VmfBlock>) -> Vec<OptimizedBlock> {
+    println!("[OPTIMIZE] Starting greedy mesh optimization with {} blocks", blocks.len());
+    
+    // Grupuj bloki po typie
+    let mut blocks_by_type: HashMap<String, Vec<VmfBlock>> = HashMap::new();
+    for block in blocks {
+        blocks_by_type.entry(block.block_type.clone())
+            .or_insert_with(Vec::new)
+            .push(block);
+    }
+    
+    let mut optimized = Vec::new();
+    
+    for (block_type, mut type_blocks) in blocks_by_type {
+        println!("[OPTIMIZE] Processing {} blocks of type {}", type_blocks.len(), block_type);
+        
+        // Sortuj dla lepszej optymalizacji
+        type_blocks.sort_by(|a, b| {
+            a.y.cmp(&b.y)
+                .then(a.z.cmp(&b.z))
+                .then(a.x.cmp(&b.x))
+        });
+        
+        let mut used: HashSet<(i32, i32, i32)> = HashSet::new();
+        
+        for block in &type_blocks {
+            let key = (block.x, block.y, block.z);
+            if used.contains(&key) {
+                continue;
+            }
+            
+            // Greedy meshing: rozszerz blok w osiach X, Y, Z
+            let mut width = 1;
+            let mut height = 1;
+            let mut depth = 1;
+            
+            // Rozszerz w osi X
+            'expand_x: loop {
+                let test_x = block.x + width;
+                for dy in 0..height {
+                    for dz in 0..depth {
+                        let test_key = (test_x, block.y + dy, block.z + dz);
+                        if used.contains(&test_key) || 
+                           !type_blocks.iter().any(|b| b.x == test_x && b.y == block.y + dy && b.z == block.z + dz) {
+                            break 'expand_x;
+                        }
+                    }
+                }
+                width += 1;
+            }
+            
+            // Rozszerz w osi Y (wysokość w Minecraft)
+            'expand_y: loop {
+                let test_y = block.y + height;
+                for dx in 0..width {
+                    for dz in 0..depth {
+                        let test_key = (block.x + dx, test_y, block.z + dz);
+                        if used.contains(&test_key) ||
+                           !type_blocks.iter().any(|b| b.x == block.x + dx && b.y == test_y && b.z == block.z + dz) {
+                            break 'expand_y;
+                        }
+                    }
+                }
+                height += 1;
+            }
+            
+            // Rozszerz w osi Z
+            'expand_z: loop {
+                let test_z = block.z + depth;
+                for dx in 0..width {
+                    for dy in 0..height {
+                        let test_key = (block.x + dx, block.y + dy, test_z);
+                        if used.contains(&test_key) ||
+                           !type_blocks.iter().any(|b| b.x == block.x + dx && b.y == block.y + dy && b.z == test_z) {
+                            break 'expand_z;
+                        }
+                    }
+                }
+                depth += 1;
+            }
+            
+            // Oznacz użyte bloki
+            for dx in 0..width {
+                for dy in 0..height {
+                    for dz in 0..depth {
+                        used.insert((block.x + dx, block.y + dy, block.z + dz));
+                    }
+                }
+            }
+            
+            optimized.push(OptimizedBlock {
+                x: block.x,
+                y: block.y,
+                z: block.z,
+                width,
+                height,
+                depth,
+                block_type: block_type.clone(),
+            });
+        }
+        
+        println!("[OPTIMIZE] {} blocks -> {} optimized meshes", type_blocks.len(), optimized.len());
+    }
+    
+    println!("[OPTIMIZE] Total optimization: {} blocks -> {} meshes", 
+        optimized.iter().map(|b| b.width * b.height * b.depth).sum::<i32>(),
+        optimized.len());
+    
+    optimized
+}
+
+fn create_optimized_solid(block: &OptimizedBlock, block_size: i32, config: &HashMap<String, MaterialConfig>) -> VmfSolid {
     let solid_id = get_next_id();
     
-    // Pobierz materiały dla każdej strony
     let top_material = get_material_for_side(&block.block_type, BlockSide::Top, config);
     let bottom_material = get_material_for_side(&block.block_type, BlockSide::Bottom, config);
     let north_material = get_material_for_side(&block.block_type, BlockSide::North, config);
@@ -314,16 +408,15 @@ fn create_cube_solid(block: &VmfBlock, block_size: i32, config: &HashMap<String,
     let east_material = get_material_for_side(&block.block_type, BlockSide::East, config);
     let west_material = get_material_for_side(&block.block_type, BlockSide::West, config);
     
-    // Konwersja współrzędnych: Minecraft (Y-up) na Source (Z-up)
+    // Oblicz współrzędne z uwzględnieniem rozmiaru
     let x1 = block.x * block_size;
-    let x2 = x1 + block_size;
-    let y1 = block.z * block_size; // Oś Z z Minecrafta staje się osią Y w VMF
-    let y2 = y1 + block_size;
-    let z1 = block.y * block_size; // Oś Y z Minecrafta (wysokość) staje się osią Z w VMF
-    let z2 = z1 + block_size;
+    let x2 = x1 + (block.width * block_size);
+    let y1 = block.z * block_size;
+    let y2 = y1 + (block.depth * block_size);
+    let z1 = block.y * block_size;
+    let z2 = z1 + (block.height * block_size);
 
     let sides = vec![
-        // Górna płaszczyzna (+Z) - Fit na całej powierzchni
         VmfSide {
             id: get_next_id(),
             plane: format!("({} {} {}) ({} {} {}) ({} {} {})", x1, y2, z2, x2, y2, z2, x2, y1, z2),
@@ -334,8 +427,6 @@ fn create_cube_solid(block: &VmfBlock, block_size: i32, config: &HashMap<String,
             lightmapscale: "16".to_string(),
             smoothing_groups: "0".to_string(),
         },
-        
-        // Dolna płaszczyzna (-Z) - Fit na całej powierzchni
         VmfSide {
             id: get_next_id(),
             plane: format!("({} {} {}) ({} {} {}) ({} {} {})", x1, y1, z1, x2, y1, z1, x2, y2, z1),
@@ -346,8 +437,6 @@ fn create_cube_solid(block: &VmfBlock, block_size: i32, config: &HashMap<String,
             lightmapscale: "16".to_string(),
             smoothing_groups: "0".to_string(),
         },
-
-        // Północna płaszczyzna (+Y) - Fit na całej powierzchni
         VmfSide {
             id: get_next_id(),
             plane: format!("({} {} {}) ({} {} {}) ({} {} {})", x1, y2, z2, x1, y2, z1, x2, y2, z1),
@@ -358,8 +447,6 @@ fn create_cube_solid(block: &VmfBlock, block_size: i32, config: &HashMap<String,
             lightmapscale: "16".to_string(),
             smoothing_groups: "0".to_string(),
         },
-
-        // Południowa płaszczyzna (-Y) - Fit na całej powierzchni
         VmfSide {
             id: get_next_id(),
             plane: format!("({} {} {}) ({} {} {}) ({} {} {})", x1, y1, z1, x1, y1, z2, x2, y1, z2),
@@ -370,8 +457,6 @@ fn create_cube_solid(block: &VmfBlock, block_size: i32, config: &HashMap<String,
             lightmapscale: "16".to_string(),
             smoothing_groups: "0".to_string(),
         },
-
-        // Wschodnia płaszczyzna (+X) - Fit na całej powierzchni
         VmfSide {
             id: get_next_id(),
             plane: format!("({} {} {}) ({} {} {}) ({} {} {})", x2, y2, z2, x2, y2, z1, x2, y1, z1),
@@ -382,8 +467,6 @@ fn create_cube_solid(block: &VmfBlock, block_size: i32, config: &HashMap<String,
             lightmapscale: "16".to_string(),
             smoothing_groups: "0".to_string(),
         },
-
-        // Zachodnia płaszczyzna (-X) - Fit na całej powierzchni
         VmfSide {
             id: get_next_id(),
             plane: format!("({} {} {}) ({} {} {}) ({} {} {})", x1, y1, z1, x1, y2, z1, x1, y2, z2),
@@ -400,6 +483,19 @@ fn create_cube_solid(block: &VmfBlock, block_size: i32, config: &HashMap<String,
         id: solid_id,
         sides,
     }
+}
+
+fn create_cube_solid(block: &VmfBlock, block_size: i32, config: &HashMap<String, MaterialConfig>) -> VmfSolid {
+    let optimized = OptimizedBlock {
+        x: block.x,
+        y: block.y,
+        z: block.z,
+        width: 1,
+        height: 1,
+        depth: 1,
+        block_type: block.block_type.clone(),
+    };
+    create_optimized_solid(&optimized, block_size, config)
 }
 
 fn write_vmf_header(file: &mut std::fs::File) -> Result<(), String> {
@@ -482,7 +578,6 @@ fn write_solid_to_file(file: &mut std::fs::File, solid: &VmfSolid) -> Result<(),
     Ok(())
 }
 
-// Główna funkcja konwersji z obsługą konfiguracji materiałów i properties
 pub fn convert_and_write_vmf(
     blocks: Vec<VmfBlock>, 
     vmf_path: &str,
@@ -494,27 +589,9 @@ pub fn convert_and_write_vmf(
     
     println!("[DEBUG] Starting VMF conversion with {} blocks, optimization: {}", total_blocks, optimize);
     
-    // Załaduj konfigurację materiałów
     let material_config = load_material_config();
-    println!("[DEBUG] Loaded material config for {} blocks", material_config.len());
+    println!("[DEBUG] Loaded {} exception materials from config", material_config.len());
     
-    // Debug - sprawdź czy oak_log jest w konfiguracji
-    if material_config.contains_key("minecraft:oak_log") {
-        println!("[DEBUG] oak_log found in config");
-    } else {
-        println!("[DEBUG] oak_log NOT found in config");
-    }
-    
-    // Debug - wypisz kilka pierwszych kluczy
-    let mut count = 0;
-    for key in material_config.keys() {
-        if count < 5 {
-            println!("[DEBUG] Config key: {}", key);
-            count += 1;
-        }
-    }
-    
-    // Utwórz plik i napisz header
     let mut file = std::fs::File::create(vmf_path).map_err(|e| e.to_string())?;
     write_vmf_header(&mut file)?;
     
@@ -524,76 +601,56 @@ pub fn convert_and_write_vmf(
     });
     
     if optimize {
-        // PROSTSZA OPTYMALIZACJA - tylko usuwanie duplikatów
-        println!("[DEBUG] Using optimized mode - removing duplicates");
+        println!("[DEBUG] Using optimized mode - greedy mesh algorithm");
         
         let _ = app.emit("detail_progress", ProgressUpdate {
             progress: 10,
-            label: "Removing duplicate blocks...".to_string(),
+            label: "Optimizing block meshes...".to_string(),
         });
         
-        // Usuń duplikaty bloków (te same pozycje)
-        let mut unique_blocks: std::collections::HashMap<(i32, i32, i32), VmfBlock> = std::collections::HashMap::new();
-        for block in blocks {
-            let key = (block.x, block.y, block.z);
-            unique_blocks.insert(key, block);
-        }
+        // PRAWDZIWA OPTYMALIZACJA - łączenie bloków
+        let optimized_blocks = optimize_blocks(blocks);
+        let mesh_count = optimized_blocks.len();
         
-        let deduplicated_blocks: Vec<VmfBlock> = unique_blocks.into_values().collect();
-        let unique_count = deduplicated_blocks.len();
+        println!("[DEBUG] Optimization complete: {} original blocks -> {} meshes", 
+            total_blocks, mesh_count);
         
-        println!("[DEBUG] Removed {} duplicate blocks, {} unique blocks remain", 
-            total_blocks - unique_count, unique_count);
+        let _ = app.emit("detail_progress", ProgressUpdate {
+            progress: 30,
+            label: format!("Optimized to {} meshes", mesh_count),
+        });
         
-        // Przetwórz bloki w batch-ach
         let batch_size = calculate_batch_size();
-        let mut processed_blocks = 0;
+        let mut processed = 0;
         
-        for (batch_idx, chunk) in deduplicated_blocks.chunks(batch_size).enumerate() {
-            let batch_start = processed_blocks;
-            
+        for (batch_idx, chunk) in optimized_blocks.chunks(batch_size).enumerate() {
             let _ = app.emit("detail_progress", ProgressUpdate {
-                progress: (10 + ((batch_start * 80) / unique_count)) as u16,
-                label: format!("Processing optimized batch {}: blocks {}-{}", 
-                    batch_idx + 1, batch_start, batch_start + chunk.len()),
+                progress: (30 + ((processed * 60) / mesh_count)) as u16,
+                label: format!("Writing batch {}: meshes {}-{}", 
+                    batch_idx + 1, processed, processed + chunk.len()),
             });
             
-            // Twórz solidy dla tego batch-a
             let mut solids = Vec::with_capacity(chunk.len());
             for block in chunk {
-                solids.push(create_cube_solid(block, block_size, &material_config));
+                solids.push(create_optimized_solid(block, block_size, &material_config));
             }
             
-            // Zapisz solidy bezpośrednio do pliku
             for solid in &solids {
                 write_solid_to_file(&mut file, solid)?;
             }
             
-            processed_blocks += chunk.len();
-            
-            // Wyczyść pamięć
+            processed += chunk.len();
             drop(solids);
             
-            // Flush co kilka batch-ów
             if batch_idx % 10 == 0 {
                 file.flush().map_err(|e| e.to_string())?;
             }
-            
-            println!("[DEBUG] Optimized batch {}, processed {}/{} unique blocks", 
-                batch_idx + 1, processed_blocks, unique_count);
         }
         
-        let _ = app.emit("detail_progress", ProgressUpdate {
-            progress: 90,
-            label: format!("Optimization complete: {} unique solids created", unique_count),
-        });
-        
-        println!("[DEBUG] Optimization complete: {} unique solids from {} total blocks (duplicates removed: {})", 
-            unique_count, total_blocks, total_blocks - unique_count);
+        println!("[DEBUG] Optimized: {} meshes written to VMF", mesh_count);
             
     } else {
-        // STANDARDOWY TRYB - każdy blok = jeden solid
-        println!("[DEBUG] Using standard mode - individual blocks");
+        println!("[DEBUG] Using standard mode - no optimization");
         
         let batch_size = calculate_batch_size();
         let mut processed_blocks = 0;
@@ -603,7 +660,7 @@ pub fn convert_and_write_vmf(
             
             let _ = app.emit("detail_progress", ProgressUpdate {
                 progress: ((batch_start as f32 / total_blocks as f32) * 90.0) as u16,
-                label: format!("Processing standard batch {}: blocks {}-{}", 
+                label: format!("Processing batch {}: blocks {}-{}", 
                     batch_idx + 1, batch_start, batch_start + chunk.len()),
             });
             
@@ -612,41 +669,25 @@ pub fn convert_and_write_vmf(
                 solids.push(create_cube_solid(block, block_size, &material_config));
             }
             
-            // Zapisz solidy bezpośrednio do pliku
             for solid in &solids {
                 write_solid_to_file(&mut file, solid)?;
             }
             
             processed_blocks += chunk.len();
-            
-            // Wyczyść pamięć
             drop(solids);
             
-            // Flush co kilka batch-ów
             if batch_idx % 10 == 0 {
                 file.flush().map_err(|e| e.to_string())?;
             }
-            
-            println!("[DEBUG] Processed standard batch {}/{}, total blocks: {}/{}", 
-                batch_idx + 1, 
-                (total_blocks + batch_size - 1) / batch_size,
-                processed_blocks, 
-                total_blocks
-            );
         }
     }
     
-    // Napisz footer i zamknij plik
     write_vmf_footer(&mut file)?;
     file.flush().map_err(|e| e.to_string())?;
     
     let _ = app.emit("detail_progress", ProgressUpdate {
         progress: 100,
-        label: if optimize {
-            "Optimized VMF generation complete".to_string()
-        } else {
-            format!("Standard VMF generation complete: {} solids written", total_blocks)
-        },
+        label: "VMF generation complete".to_string(),
     });
     
     println!("[DEBUG] VMF file generation completed successfully");
