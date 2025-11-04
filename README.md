@@ -294,6 +294,7 @@ Found a bug? Please report it on the [Issues](https://github.com/plhappylemonpl/
 - [ ] **Entity conversion** (chests as props, signs as text overlays)
 - [ ] **Batch conversion** (multiple worlds at once)
 - [ ] **Custom texture pack support**
+- [ ] **Automatic selection of textures directly from the texture folder**
 - [ ] **Map preview** before conversion
 - [ ] **Config file** for advanced settings
 - [ ] **Command-line interface** for automation
