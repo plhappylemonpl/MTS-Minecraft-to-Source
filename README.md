@@ -235,7 +235,7 @@ sudo apt install -y \
 
 ### Architecture
 
-- **Frontend**: Svelte with TypeScript for reactive UI
+- **Frontend**: React with TypeScript for reactive UI
 - **Backend**: Rust with Tauri for native performance
 - **World Reading**: `fastanvil` crate for efficient Anvil format parsing
 - **Optimization**: Custom greedy mesh algorithm for brush reduction
@@ -335,7 +335,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ### Code Style
 
 - **Rust**: Follow `rustfmt` standards (`cargo fmt`)
-- **TypeScript/Svelte**: Follow project ESLint configuration
+- **TypeScript/React**: Follow project ESLint configuration
 - **Commits**: Use conventional commit messages
 
 ---
@@ -344,7 +344,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 - **fastanvil** - Efficient Minecraft world reading
 - **Tauri** - Modern desktop application framework
-- **Svelte** - Reactive UI framework
+- **React** - Reactive UI framework
 - **Minecraft community** - Inspiration and support
 - **Source engine modding community** - Documentation and tools
 
